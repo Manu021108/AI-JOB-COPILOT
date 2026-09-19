@@ -64,7 +64,15 @@ export default function JobsList({
                 <strong className="ellipsis" title={job.title}>{job.title}</strong>
                 <span className={`badge status-${job.status.toLowerCase()}`}>{job.status}</span>
               </div>
-              <div className="muted">{job.company || "No company"}{job.location ? ` · ${job.location}` : ""}</div>
+              {job.match && (
+                <div className="job-card-match">
+                  <div className={`match-ring match-${job.match.category.toLowerCase()}`}>
+                    <span>{job.match.overall_score}</span>
+                  </div>
+                  <div className="muted">{job.company || "No company"}{job.location ? ` · ${job.location}` : ""}</div>
+                </div>
+              )}
+              {!job.match && <div className="muted">{job.company || "No company"}{job.location ? ` · ${job.location}` : ""}</div>}
               <div className="job-tags">
                 {job.work_mode && <span className="chip">{job.work_mode}</span>}
                 {job.employment_type && <span className="chip">{job.employment_type}</span>}

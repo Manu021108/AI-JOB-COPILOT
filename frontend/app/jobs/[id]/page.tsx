@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Sidebar from "@/components/Sidebar";
 import JobEditor from "@/components/jobs/JobEditor";
+import JobMatchPanel from "@/components/matches/JobMatchPanel";
 import { clearToken } from "@/lib/auth";
 import { analyzeJob, deleteJob, getCurrentUser, getJob, getJobAnalysis, updateJob } from "@/lib/api";
 import type { Job, JobAnalysis, JobInput } from "@/types/job";
@@ -174,6 +175,8 @@ export default function JobDetailPage() {
                       <p className="muted">{job.description?.trim() ? "Run analysis to extract requirements, skills and experience." : "Add a description, then you can analyze this job."}</p>
                     </button>
                   )}
+
+                  {!editing && <JobMatchPanel jobId={id} />}
                 </div>
               )}
             </>

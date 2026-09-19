@@ -7,9 +7,10 @@ import type {
 } from "@/types/resume";
 import type { Job, JobAnalysis, JobDescriptionInput, JobInput, JobFilters, PaginatedJobs } from "@/types/job";
 import type { TokenResponse, User } from "@/types/auth";
+import type { JobMatchListItem, MatchFilters, MatchResponse, PaginatedMatches } from "@/types/match";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-if (!API_URL) console.warn("NEXT_PUBLIC_API_URL is not configured.");
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+if (!process.env.NEXT_PUBLIC_API_URL) console.warn("NEXT_PUBLIC_API_URL is not configured; defaulting to http://localhost:8000.");
 
 class ApiError extends Error {
   code?: string;
@@ -82,7 +83,24 @@ export const analyzeJob = (id: string) =>
   requestEnvelope<JobAnalysis>(`/api/jobs/${id}/analyze`, { method: "POST" });
 export const getJobAnalysis = (id: string) => requestEnvelope<JobAnalysis>(`/api/jobs/${id}/analysis`);
 
+export const calculateJobMatch = (jobId: string) =>
+  requestEnvelope<MatchResponse>(`/api/jobs/${jobId}/match`, { method: "POST" });
+export const getJobMatch = (jobId: string) => requestEnvelope<MatchResponse>(`/api/jobs/${jobId}/match`);
+export const listMatches = (filters: MatchFilters = {}) =>
+  requestEnvelope<PaginatedMatches>(`/api/matches?${buildMatchQuery(filters)}`);
+export const getMatch = (matchId: string) => requestEnvelope<MatchResponse>(`/api/matches/${matchId}`);
+export const recalculateMatches = () => requestEnvelope<{ recalculated: number; items: JobMatchListItem[] }>("/api/matches/recalculate", { method: "POST" });
+export const runAllMatches = () => requestEnvelope<{ generated: number; items: JobMatchListItem[] }>("/api/matches/run", { method: "POST" });
+
 function buildJobQuery(filters: JobFilters): string {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") params.set(key, String(value));
+  });
+  return params.toString();
+}
+
+function buildMatchQuery(filters: MatchFilters): string {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") params.set(key, String(value));

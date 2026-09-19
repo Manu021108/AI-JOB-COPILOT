@@ -1,6 +1,12 @@
 export type JobStatus = "ACTIVE" | "CLOSED" | "EXPIRED" | "ARCHIVED";
 export type JobSource = "USER_SUBMITTED" | "URL";
 
+export interface MatchSummary {
+  overall_score: number;
+  category: string;
+  is_stale: boolean;
+}
+
 export interface JobItem {
   id: string;
   title: string;
@@ -12,6 +18,7 @@ export interface JobItem {
   employment_type: string | null;
   created_at: string;
   has_analysis: boolean;
+  match?: MatchSummary | null;
 }
 
 export interface Job extends JobItem {
