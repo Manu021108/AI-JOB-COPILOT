@@ -7,6 +7,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     cors_origins: str = "http://localhost:3000"
+    storage_path: str = "./storage"
+    max_resume_size_mb: int = 10
+    llm_provider: str = "mock"
+    llm_api_key: str | None = None
+    llm_model: str = "gpt-4o-mini"
+    llm_base_url: str | None = None
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     @property
