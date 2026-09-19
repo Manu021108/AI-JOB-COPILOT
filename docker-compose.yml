@@ -21,10 +21,18 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       BACKEND_PORT: ${BACKEND_PORT:-8000}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      STORAGE_PATH: ${STORAGE_PATH:-/app/storage}
+      MAX_RESUME_SIZE_MB: ${MAX_RESUME_SIZE_MB:-10}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
     depends_on:
       postgres: {condition: service_healthy}
     ports: ["${BACKEND_PORT:-8000}:8000"]
-    volumes: [./backend:/app]
+    volumes:
+      - ./backend:/app
+      - uploaded_resumes:/app/storage
   frontend:
     build: ./frontend
     environment:
@@ -34,3 +42,4 @@ services:
     volumes: [./frontend:/app, /app/node_modules]
 volumes:
   postgres_data:
+  uploaded_resumes:
