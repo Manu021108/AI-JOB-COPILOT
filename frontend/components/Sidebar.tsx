@@ -1,0 +1,1 @@
+export default function Sidebar() { const nav=["Dashboard","Resume","Jobs","Applications","Analytics","Settings"]; return <aside className="side"><div className="brand">AI Job Copilot</div>{nav.map((item,index)=><a className={index===0?"active":""} href={index===0?"/dashboard":"#"} key={item}>{item}{index>0&&<span className="soon">SOON</span>}</a>)}</aside> }
