@@ -20,6 +20,7 @@ from app.schemas.job import (
 )
 from app.services.job_service import DuplicateJobError, JobNotFoundError, JobService, VALID_SORTS
 from app.services.job_sources import JobSourceError
+from app.services.match_service import MatchService, ProfileNotFoundError
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -117,6 +118,7 @@ def list_jobs(
         sort=sort,
     )
     items = [_list_item(job) for job in result["items"]]
+    items = _attach_match_summaries(db, current_user, items)
     return ok(PaginatedJobs(
         items=items,
         page=result["page"],
@@ -137,7 +139,9 @@ def get_job(
         job = service.get_job(db, current_user, job_id)
     except Exception as exc:
         _map_service_errors(exc)
-    return ok(_job_response(job))
+    data = _job_response(job)
+    data = _attach_match_summaries(db, current_user, [data])[0]
+    return ok(data)
 
 
 @router.put("/{job_id}")
@@ -199,6 +203,50 @@ def get_job_analysis(
     return ok(_analysis_response(current_user.id, job_id, record))
 
 
+@router.post("/{job_id}/match", status_code=status.HTTP_201_CREATED)
+def calculate_job_match(
+    job_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    service = JobService()
+    try:
+        job = service.get_job(db, current_user, job_id)
+    except Exception as exc:
+        _map_service_errors(exc)
+    match_service = MatchService()
+    try:
+        record = match_service.calculate_match(db, current_user, job, force=False)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        _map_match_errors(exc)
+    return ok(_match_response_record(record))
+
+
+@router.get("/{job_id}/match")
+def get_job_match(
+    job_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    service = JobService()
+    try:
+        job = service.get_job(db, current_user, job_id)
+    except Exception as exc:
+        _map_service_errors(exc)
+    match_service = MatchService()
+    try:
+        record = match_service.get_match_for_job(db, current_user, job_id)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        _map_match_errors(exc)
+    if record is None:
+        raise_api(ApiError("MATCH_NOT_FOUND", "No match has been computed for this job yet.", status.HTTP_404_NOT_FOUND))
+    return ok(_match_response_record(record))
+
+
 def _job_response(job: Job) -> dict:
     data = JobResponse.model_validate(job).model_dump()
     data["has_analysis"] = job.analysis is not None
@@ -228,3 +276,44 @@ def _analysis_response(user_id: uuid.UUID, job_id: uuid.UUID, record: JobAnalysi
         employment_details=record.employment_details,
         updated_at=record.updated_at,
     ).model_dump()
+
+
+def _map_match_errors(exc: Exception) -> None:
+    if isinstance(exc, ProfileNotFoundError):
+        raise_api(ApiError("PROFILE_NOT_FOUND", str(exc), status.HTTP_422_UNPROCESSABLE_ENTITY))
+    if isinstance(exc, JobNotFoundError):
+        raise_api(ApiError("JOB_NOT_FOUND", "Job not found.", status.HTTP_404_NOT_FOUND))
+    raise_api(ApiError("MATCH_FAILED", "The match could not be computed. Please try again.", status.HTTP_400_BAD_REQUEST))
+
+
+def _match_response_record(record) -> dict:
+    from app.api.matches import match_response
+
+    return match_response(record)
+
+
+def _attach_match_summaries(db, current_user, items: list[dict]) -> list[dict]:
+    """Attach the latest match summary to job items for dashboard display."""
+    job_ids = {item["id"] for item in items if item.get("id")}
+    if not job_ids:
+        return items
+    from sqlalchemy import select
+    from app.models import JobMatch
+    from app.services.matching.config import category_for_score
+
+    records = db.scalars(
+        select(JobMatch).where(JobMatch.user_id == current_user.id, JobMatch.job_id.in_(job_ids))
+        .order_by(JobMatch.created_at.desc())
+    ).all()
+    latest: dict[str, dict] = {}
+    for record in records:
+        key = str(record.job_id)
+        if key not in latest:
+            latest[key] = {
+                "overall_score": record.overall_score,
+                "category": category_for_score(record.overall_score),
+                "is_stale": record.is_stale,
+            }
+    for item in items:
+        item["match"] = latest.get(str(item["id"]))
+    return items

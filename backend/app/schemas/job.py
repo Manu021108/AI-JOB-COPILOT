@@ -129,6 +129,7 @@ class JobResponse(BaseModel):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     has_analysis: bool = False
+    match: dict | None = None
 
 
 class JobListItem(BaseModel):
@@ -143,6 +144,7 @@ class JobListItem(BaseModel):
     employment_type: str | None
     created_at: datetime.datetime
     has_analysis: bool = False
+    match: dict | None = None
 
 
 class JobAnalysisResponse(BaseModel):

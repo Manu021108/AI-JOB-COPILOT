@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     job_fetch_max_redirects: int = 5
     job_import_rate_limit: int = 20
     job_import_rate_window: int = 60
+    embedding_provider: str = "deterministic"
+    embedding_model: str = "all-MiniLM-L6-v2"
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     @property

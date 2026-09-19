@@ -1,0 +1,4 @@
+# Optional semantic embeddings for the job matching engine.
+# Only needed when EMBEDDING_PROVIDER=sentence-transformers.
+# The default "deterministic" provider works without these.
+sentence-transformers==3.4.1

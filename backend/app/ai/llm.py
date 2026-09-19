@@ -59,7 +59,12 @@ class MockLLMProvider:
     name = "mock"
 
     def complete(self, system_prompt: str, user_prompt: str) -> str:
-        if "JOB DESCRIPTION:" in (user_prompt or "") and "```" in (user_prompt or ""):
+        user_prompt = user_prompt or ""
+        if "MATCH EXPLANATION:" in user_prompt and "```" in user_prompt:
+            from app.ai.mock_match_explainer import explain_from_prompt
+
+            return explain_from_prompt(_extract_prompts_resume_text(user_prompt, marker="MATCH EXPLANATION:"))
+        if "JOB DESCRIPTION:" in user_prompt and "```" in user_prompt:
             from app.ai.mock_job_extractor import extract_from_text as extract_job
 
             return extract_job(_extract_prompts_resume_text(user_prompt, marker="JOB DESCRIPTION:"))
