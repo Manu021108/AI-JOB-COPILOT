@@ -16,3 +16,4 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     resumes: Mapped[list["Resume"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     profile: Mapped["CandidateProfile | None"] = relationship(back_populates="user", cascade="all, delete-orphan", uselist=False)
+    jobs: Mapped[list["Job"]] = relationship(back_populates="user", cascade="all, delete-orphan")

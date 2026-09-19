@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None
     llm_model: str = "gpt-4o-mini"
     llm_base_url: str | None = None
+    job_fetch_connect_timeout: float = 5.0
+    job_fetch_timeout: float = 20.0
+    job_fetch_max_size: int = 2_000_000
+    job_fetch_max_redirects: int = 5
+    job_import_rate_limit: int = 20
+    job_import_rate_window: int = 60
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     @property

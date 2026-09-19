@@ -8,6 +8,7 @@ from app.models.candidate_profile import (
     CandidateEducation,
     CandidateCertification,
 )
+from app.models.job import Job, JobAnalysis, JobSkill
 
 __all__ = [
     "User",
@@ -18,4 +19,7 @@ __all__ = [
     "CandidateProject",
     "CandidateEducation",
     "CandidateCertification",
+    "Job",
+    "JobAnalysis",
+    "JobSkill",
 ]

@@ -59,15 +59,23 @@ class MockLLMProvider:
     name = "mock"
 
     def complete(self, system_prompt: str, user_prompt: str) -> str:
+        if "JOB DESCRIPTION:" in (user_prompt or "") and "```" in (user_prompt or ""):
+            from app.ai.mock_job_extractor import extract_from_text as extract_job
+
+            return extract_job(_extract_prompts_resume_text(user_prompt, marker="JOB DESCRIPTION:"))
         from app.ai.mock_extractor import extract_from_text
 
         return extract_from_text(_extract_resume_text(user_prompt))
 
 
 def _extract_resume_text(user_prompt: str) -> str:
+    return _extract_prompts_resume_text(user_prompt, marker="RESUME TEXT:")
+
+
+def _extract_prompts_resume_text(user_prompt: str, marker: str) -> str:
     import re
 
-    match = re.search(r"RESUME TEXT:\s*\n*```(.*?)```", user_prompt, re.DOTALL | re.IGNORECASE)
+    match = re.search(rf"{re.escape(marker)}\s*\n*```(.*?)```", user_prompt, re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1).strip()
     return user_prompt
